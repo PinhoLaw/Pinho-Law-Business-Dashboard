@@ -133,6 +133,68 @@ td.cell-edited{border-bottom:2px solid #4472c4 !important}
 .undo-btn{color:#4472c4}
 .undo-btn:hover{background:#dce6f1;border-color:#999}
 .undo-btn:disabled{opacity:.35;cursor:default;background:#fff}
+
+/* ── Deadline alerts ── */
+tr.deadline-overdue td{border-left:3px solid #c0504d !important}
+tr.deadline-overdue td:first-child{background:#fce4ec !important}
+tr.deadline-soon td{border-left:3px solid #bf8f00 !important}
+tr.deadline-soon td:first-child{background:#fff8e1 !important}
+.deadline-chip{display:inline-block;padding:1px 5px;font-size:9px;font-weight:700;border-radius:1px;margin-left:4px}
+.deadline-chip.overdue{background:#ffc7ce;color:#9c0006}
+.deadline-chip.soon{background:#ffeb9c;color:#9c6500}
+
+/* ── Quick-add row ── */
+.add-row-btn{font-size:10.5px;padding:3px 9px;border:1px solid #4472c4;background:#fff;cursor:pointer;border-radius:1px;color:#4472c4;font-weight:600}
+.add-row-btn:hover{background:#dce6f1}
+tr.new-row td{background:#eef6ff !important;border-bottom:2px solid #4472c4 !important}
+tr.new-row td:first-child{background:#eef6ff !important}
+
+/* ── Row detail panel ── */
+.detail-overlay{display:none;position:fixed;top:0;right:0;bottom:0;width:420px;background:#fff;border-left:2px solid #4472c4;box-shadow:-4px 0 16px rgba(0,0,0,.12);z-index:200;overflow-y:auto;padding:0;font-size:12px}
+.detail-overlay.open{display:block}
+.detail-header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:#f0f0f0;border-bottom:1px solid #ccc;position:sticky;top:0;z-index:1}
+.detail-header h3{font-size:13px;color:#1a3a5c;font-weight:700;margin:0}
+.detail-close{font-size:18px;cursor:pointer;color:#888;border:none;background:none;padding:0 4px}
+.detail-close:hover{color:#c0504d}
+.detail-body{padding:12px 16px}
+.detail-field{margin-bottom:10px}
+.detail-field .dl{font-size:9.5px;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:2px}
+.detail-field .dv{font-size:12px;color:#222;word-wrap:break-word;white-space:pre-wrap;padding:4px 6px;background:#f7f7f7;border:1px solid #e0e0e0;border-radius:1px;min-height:20px}
+.detail-field .dv:empty::before{content:'\2014';color:#bbb}
+
+/* ── Activity log ── */
+.activity-toggle{font-size:10.5px;padding:3px 9px;border:1px solid #ccc;background:#fff;cursor:pointer;border-radius:1px;color:#5b2c8e}
+.activity-toggle:hover{background:#f3e8ff;border-color:#999}
+.activity-panel{display:none;position:fixed;bottom:0;left:0;right:0;height:180px;background:#fff;border-top:2px solid #5b2c8e;box-shadow:0 -2px 10px rgba(0,0,0,.1);z-index:150;overflow:hidden;font-size:11px}
+.activity-panel.open{display:flex;flex-direction:column}
+.activity-panel-header{display:flex;justify-content:space-between;align-items:center;padding:6px 14px;background:#f8f4ff;border-bottom:1px solid #e0d4f0;flex-shrink:0}
+.activity-panel-header span{font-weight:600;color:#5b2c8e;font-size:11px}
+.activity-list{flex:1;overflow-y:auto;padding:6px 14px}
+.activity-item{padding:3px 0;border-bottom:1px solid #f0f0f0;color:#444;display:flex;gap:8px}
+.activity-item .at{color:#aaa;font-size:10px;white-space:nowrap;min-width:55px}
+.activity-item .am{flex:1}
+.activity-clear{font-size:10px;color:#c0504d;cursor:pointer;border:none;background:none}
+
+/* ── Status dropdown (inline) ── */
+.status-select{font-size:10.5px;padding:1px 4px;border:1px solid #ccc;border-radius:1px;background:#fff;font-family:inherit;cursor:pointer;max-width:140px}
+
+/* ── Print styles ── */
+@media print{
+  body{background:#fff !important;font-size:10px}
+  .tab-strip,.ctrl-bar,.flow-bar,.activity-panel,.detail-overlay,.ctx-menu,
+  .export-btn,.undo-btn,.add-row-btn,.clr-btn,.activity-toggle,.srch,.rc{display:none !important}
+  .sheet{display:none !important;border:none !important;padding:4px !important}
+  .sheet.on{display:block !important}
+  .tbl-wrap{max-height:none !important;overflow:visible !important;border:none !important}
+  .xl{font-size:9px}
+  .xl th,.xl td{padding:2px 4px;border:1px solid #999}
+  .xl th{background:#e0e0e0 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .xl td:first-child,.xl th:first-child{position:static}
+  .krow{break-inside:avoid}
+  .krow>div{border:1px solid #ccc}
+  .s{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  tr.deadline-overdue td,tr.deadline-soon td,tr.row-flagged td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
 </style>
 </head>
 <body>
@@ -144,7 +206,13 @@ td.cell-edited{border-bottom:2px solid #4472c4 !important}
       <div style="font-size:16px;font-weight:700;color:#1a3a5c">Pinho Law – Master Pipeline Dashboard <span style="font-weight:400;color:#bbb">|</span> <span style="font-weight:500;color:#666">March 17, 2026</span></div>
       <div style="font-size:11px;color:#888;margin-top:2px">Pipeline Flow: Intake → Ongoing → Controle Sunbiz → My Cases &nbsp;·&nbsp; Live data from spreadsheets</div>
     </div>
-    <div style="font-size:10px;color:#aaa;text-align:right">Updated March 17, 2026<br>Intake · Business · Litigation</div>
+    <div style="font-size:10px;color:#aaa;text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+      <span>Updated March 17, 2026 · Intake · Business · Litigation</span>
+      <div style="display:flex;gap:5px">
+        <button class="activity-toggle" onclick="toggleActivity()">Activity Log</button>
+        <button class="export-btn" onclick="window.print()" style="color:#1a3a5c">Print / PDF</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -190,6 +258,7 @@ td.cell-edited{border-bottom:2px solid #4472c4 !important}
     <span class="export-btn" onclick="exportCSV('t1')">Export CSV</span>
     <button class="undo-btn" id="undo-t1" onclick="undoEdit('t1')" disabled>Undo</button>
     <button class="undo-btn" id="redo-t1" onclick="redoEdit('t1')" disabled>Redo</button>
+    <button class="add-row-btn" onclick="addRow('t1')">+ Add Row</button>
     <span style="font-size:10px;color:#aaa">470 rows · Intake_business_department.xlsx</span>
   </div>
   <div class="tbl-wrap">
@@ -6340,6 +6409,7 @@ Hoje, representantes da empresa meio entraram em contato após descobrirem esse 
     <span class="export-btn" onclick="exportCSV('t2')">Export CSV</span>
     <button class="undo-btn" id="undo-t2" onclick="undoEdit('t2')" disabled>Undo</button>
     <button class="undo-btn" id="redo-t2" onclick="redoEdit('t2')" disabled>Redo</button>
+    <button class="add-row-btn" onclick="addRow('t2')">+ Add Row</button>
     <span style="font-size:10px;color:#aaa">186 matters · Business_Ongoing_Activities</span>
   </div>
   <div class="tbl-wrap">
@@ -8848,6 +8918,7 @@ Passado: Demand Letter enviada</td>
     <span class="export-btn" onclick="exportCSV('t3a');exportCSV('t3b')">Export CSV</span>
     <button class="undo-btn" id="undo-t3a" onclick="undoEdit('t3a')" disabled>Undo</button>
     <button class="undo-btn" id="redo-t3a" onclick="redoEdit('t3a')" disabled>Redo</button>
+    <button class="add-row-btn" onclick="addRow('t3a')">+ Add Row</button>
     <span style="font-size:10px;color:#aaa">Active: 26 · Inactive/Dissolved: 41</span>
   </div>
   <div class="side-grid">
@@ -9574,6 +9645,7 @@ Passado: Demand Letter enviada</td>
     <span class="export-btn" onclick="exportCSV('t4')">Export CSV</span>
     <button class="undo-btn" id="undo-t4" onclick="undoEdit('t4')" disabled>Undo</button>
     <button class="undo-btn" id="redo-t4" onclick="redoEdit('t4')" disabled>Redo</button>
+    <button class="add-row-btn" onclick="addRow('t4')">+ Add Row</button>
     <span style="font-size:10px;color:#aaa">68 active cases · Litigation file</span>
   </div>
   <div class="tbl-wrap">
@@ -11926,6 +11998,27 @@ window.addEventListener('DOMContentLoaded',()=>{
 });
 </script>
 
+<!-- Detail Panel (slide-out) -->
+<div class="detail-overlay" id="detailPanel">
+  <div class="detail-header">
+    <h3 id="detailTitle">Row Details</h3>
+    <button class="detail-close" onclick="closeDetail()">&times;</button>
+  </div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- Activity Log Panel -->
+<div class="activity-panel" id="activityPanel">
+  <div class="activity-panel-header">
+    <span>Activity Log</span>
+    <div>
+      <button class="activity-clear" onclick="clearActivityLog()">Clear all</button>
+      <button class="detail-close" onclick="toggleActivity()" style="font-size:14px">&times;</button>
+    </div>
+  </div>
+  <div class="activity-list" id="activityList"></div>
+</div>
+
 <!-- Context menu -->
 <div class="ctx-menu" id="ctxMenu">
   <div onclick="ctxCopyCell()">Copy cell</div>
@@ -12308,11 +12401,227 @@ function injectResizeHandles(){
 }
 
 /* ═══════════════════════════════════════════════════════════
+   10. QUICK-ADD ROW
+   ═══════════════════════════════════════════════════════════ */
+function addRow(tid){
+  const table=document.getElementById(tid);if(!table)return;
+  const tbody=table.querySelector('tbody');
+  const colCount=table.querySelectorAll('thead th').length;
+  const tr=document.createElement('tr');
+  tr.className='new-row';
+  for(let i=0;i<colCount;i++){
+    const td=document.createElement('td');
+    td.textContent='';
+    if(i===0){td.style.position='sticky';td.style.left='0';td.style.zIndex='1';td.style.borderRight='2px solid #bbb'}
+    tr.appendChild(td);
+  }
+  tbody.insertBefore(tr,tbody.firstChild);
+  // Auto-start editing the first cell
+  const firstTd=tr.children[0];
+  if(firstTd){selectCell(firstTd);startEdit(firstTd)}
+  logActivity(tid,'Added new row');
+  updateCount(tid);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   11. ROW DETAIL PANEL (click row number area)
+   ═══════════════════════════════════════════════════════════ */
+// Triple-click on a row opens the detail panel
+let clickTimer=null;let clickCount=0;
+document.addEventListener('click',function(e){
+  const td=e.target.closest('td');
+  if(!td||!td.closest('table.xl'))return;
+  // Detect triple-click via rapid clicks
+  clickCount++;
+  if(clickTimer)clearTimeout(clickTimer);
+  clickTimer=setTimeout(()=>{clickCount=0},400);
+  if(clickCount>=3){
+    clickCount=0;
+    openDetail(td.parentElement);
+  }
+});
+
+function openDetail(tr){
+  const table=tr.closest('table');if(!table)return;
+  const headers=Array.from(table.querySelectorAll('thead th')).map(th=>{
+    const lbl=th.querySelector('.sort-label');
+    return(lbl?lbl.textContent:th.textContent).replace(/[↕▲▼]/g,'').trim();
+  });
+  const cells=Array.from(tr.children);
+  const panel=document.getElementById('detailPanel');
+  const body=document.getElementById('detailBody');
+  const title=document.getElementById('detailTitle');
+  // Use first cell as title
+  title.textContent=cells[0]?.textContent||'Row Details';
+  let html='';
+  headers.forEach((h,i)=>{
+    const val=cells[i]?.textContent||'';
+    html+='<div class="detail-field"><div class="dl">'+h+'</div><div class="dv">'+val+'</div></div>';
+  });
+  body.innerHTML=html;
+  panel.classList.add('open');
+}
+function closeDetail(){document.getElementById('detailPanel').classList.remove('open')}
+
+/* ═══════════════════════════════════════════════════════════
+   12. DEADLINE ALERTS
+   ═══════════════════════════════════════════════════════════ */
+// Map of table ID -> column indices that contain dates to check
+const DEADLINE_COLS={
+  t1:[0],       // Entry Date
+  t2:[7],       // Deadline
+  t3a:[3],      // Date Filed
+  t3b:[4],      // Date Filed
+  t4:[],
+  t4c:[],
+  t5:[]
+};
+
+function scanDeadlines(){
+  const now=new Date();
+  const soon=new Date();soon.setDate(now.getDate()+7);
+  for(const[tid,cols]of Object.entries(DEADLINE_COLS)){
+    if(!cols.length)continue;
+    const table=document.getElementById(tid);if(!table)continue;
+    table.querySelectorAll('tbody tr').forEach(tr=>{
+      tr.classList.remove('deadline-overdue','deadline-soon');
+      cols.forEach(ci=>{
+        const td=tr.children[ci];if(!td)return;
+        const text=td.textContent.trim();
+        if(!text||text==='\u2014')return;
+        const d=new Date(text);
+        if(isNaN(d.getTime()))return;
+        // Remove any existing chips
+        td.querySelectorAll('.deadline-chip').forEach(c=>c.remove());
+        if(d<now){
+          tr.classList.add('deadline-overdue');
+          const chip=document.createElement('span');
+          chip.className='deadline-chip overdue';chip.textContent='OVERDUE';
+          td.appendChild(chip);
+        } else if(d<=soon){
+          tr.classList.add('deadline-soon');
+          const chip=document.createElement('span');
+          chip.className='deadline-chip soon';chip.textContent='DUE SOON';
+          td.appendChild(chip);
+        }
+      });
+    });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   13. EDITABLE STATUS DROPDOWNS
+   ═══════════════════════════════════════════════════════════ */
+// Map: table ID -> col index -> allowed status values
+const STATUS_COLS={
+  t1:{5:['','Open','Closed','Litigation','Pending','Follow-up']},
+  t2:{4:['','Open','Closed','Litigation','Pending','Awaiting']},
+  t3a:{2:['ACTIVE','INACTIVE']},
+  t3b:{2:['ACTIVE','INACTIVE','ADMIN DISSOLUTION FOR ANNUAL REPORT','VOLUNTARY DISSOLUTION']}
+};
+
+function makeStatusDropdowns(){
+  for(const[tid,colMap]of Object.entries(STATUS_COLS)){
+    const table=document.getElementById(tid);if(!table)continue;
+    for(const[ci,options]of Object.entries(colMap)){
+      table.querySelectorAll('tbody tr').forEach(tr=>{
+        const td=tr.children[parseInt(ci)];if(!td)return;
+        const current=td.textContent.trim();
+        td.addEventListener('dblclick',function(e){
+          e.stopPropagation();
+          if(td.querySelector('select'))return;
+          const origHTML=td.innerHTML;
+          const sel=document.createElement('select');
+          sel.className='status-select';
+          options.forEach(opt=>{
+            const o=document.createElement('option');
+            o.value=opt;o.textContent=opt||'\u2014';
+            if(opt.toLowerCase()===current.toLowerCase()||(!opt&&(current==='\u2014'||!current)))o.selected=true;
+            sel.appendChild(o);
+          });
+          td.innerHTML='';td.appendChild(sel);
+          sel.focus();
+          sel.addEventListener('change',function(){
+            const val=sel.value;
+            td.innerHTML=val?val:'\u2014';
+            td.classList.add('cell-edited');
+            const pos=getCellPos(td);
+            if(!UNDO[tid])UNDO[tid]=[];
+            UNDO[tid].push({row:pos.row,col:pos.col,oldHTML:origHTML});
+            updateUndoButtons(tid);
+            saveEditsToLS(tid);
+            logActivity(tid,'Status changed to "'+val+'" in row '+(pos.row+1));
+          });
+          sel.addEventListener('blur',function(){
+            if(td.querySelector('select')){
+              const val=sel.value;
+              td.innerHTML=val?val:'\u2014';
+            }
+          });
+        });
+      });
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   14. ACTIVITY LOG
+   ═══════════════════════════════════════════════════════════ */
+const ACT_LS_KEY='pinho_activity_v1';
+
+function toggleActivity(){
+  document.getElementById('activityPanel').classList.toggle('open');
+  renderActivityLog();
+}
+function logActivity(tid,msg){
+  try{
+    const log=JSON.parse(localStorage.getItem(ACT_LS_KEY)||'[]');
+    const now=new Date();
+    const time=now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    const date=now.toLocaleDateString([],{month:'short',day:'numeric'});
+    log.unshift({time:time,date:date,tid:tid,msg:msg});
+    if(log.length>200)log.length=200;
+    localStorage.setItem(ACT_LS_KEY,JSON.stringify(log));
+    renderActivityLog();
+  }catch(e){}
+}
+function renderActivityLog(){
+  const list=document.getElementById('activityList');if(!list)return;
+  try{
+    const log=JSON.parse(localStorage.getItem(ACT_LS_KEY)||'[]');
+    if(!log.length){list.innerHTML='<div style="color:#bbb;padding:10px">No activity yet</div>';return}
+    list.innerHTML=log.map(e=>
+      '<div class="activity-item"><span class="at">'+e.date+' '+e.time+'</span><span class="am"><b>['+e.tid+']</b> '+e.msg+'</span></div>'
+    ).join('');
+  }catch(e){list.innerHTML=''}
+}
+function clearActivityLog(){
+  localStorage.removeItem(ACT_LS_KEY);
+  renderActivityLog();
+}
+
+// Hook activity logging into the existing edit commit
+const _origStartEdit=startEdit;
+startEdit=function(td){
+  const origCommit=td._commitHooked;
+  _origStartEdit(td);
+  // After edit, the blur handler will fire — we log in saveEditsToLS override
+};
+const _origSaveEdits=saveEditsToLS;
+saveEditsToLS=function(tid){
+  _origSaveEdits(tid);
+  // Activity is logged from specific actions (status change, add row, etc.)
+};
+
+/* ═══════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded',function(){
   injectResizeHandles();
   loadFromLS();
+  scanDeadlines();
+  makeStatusDropdowns();
+  renderActivityLog();
 });
 </script>
 </body>
