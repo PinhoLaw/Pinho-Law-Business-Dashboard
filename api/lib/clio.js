@@ -121,7 +121,7 @@ async function clioApiGet(accessToken, endpoint, params = {}) {
   return res.json();
 }
 
-async function fetchAllPages(accessToken, endpoint, params = {}) {
+async function fetchAllPages(accessToken, endpoint, params = {}, maxPages = 5) {
   let allData = [];
   let page = 1;
   let hasMore = true;
@@ -140,8 +140,8 @@ async function fetchAllPages(accessToken, endpoint, params = {}) {
     hasMore = result.meta && result.meta.paging && result.meta.paging.next;
     page++;
 
-    // Safety limit
-    if (page > 50) break;
+    // Safety limit - configurable, default 5 pages (1000 records)
+    if (page > maxPages) break;
   }
 
   return allData;
