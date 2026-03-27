@@ -13065,6 +13065,22 @@ Hoje, representantes da empresa meio entraram em contato após descobrirem esse 
     </div>
   </div>
 
+  <!-- Date Range Filter -->
+  <div id="billing-date-filter" style="display:none;background:#f7f9fc;border:1px solid #d0d8e8;border-radius:3px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:11px;font-weight:600;color:#555">Date Range:</span>
+    <button class="date-preset-btn" onclick="setBillingDateRange('7d')" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Last 7 Days</button>
+    <button class="date-preset-btn" onclick="setBillingDateRange('30d')" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Last 30 Days</button>
+    <button class="date-preset-btn active" onclick="setBillingDateRange('90d')" style="padding:3px 10px;font-size:10.5px;border:1px solid #4472c4;background:#eef3fc;color:#4472c4;border-radius:2px;cursor:pointer;font-weight:600">Last 90 Days</button>
+    <button class="date-preset-btn" onclick="setBillingDateRange('ytd')" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Year to Date</button>
+    <button class="date-preset-btn" onclick="setBillingDateRange('all')" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">All Time</button>
+    <span style="font-size:11px;color:#999;margin-left:4px">|</span>
+    <span style="font-size:11px;color:#555">Custom:</span>
+    <input type="date" id="billing-date-from" style="font-size:10.5px;padding:2px 6px;border:1px solid #ccc;border-radius:2px">
+    <span style="font-size:10.5px;color:#999">to</span>
+    <input type="date" id="billing-date-to" style="font-size:10.5px;padding:2px 6px;border:1px solid #ccc;border-radius:2px">
+    <button onclick="loadBillingData()" style="padding:3px 10px;font-size:10.5px;font-weight:600;color:#fff;background:#4472c4;border:1px solid #2b5797;border-radius:2px;cursor:pointer">Apply</button>
+  </div>
+
   <!-- KPI Row -->
   <div class="krow" id="billing-kpi" style="display:none">
     <div><div class="v" style="color:#4472c4" id="kpi-hours">—</div><div class="l">Total Hours</div></div>
@@ -13941,6 +13957,10 @@ async function checkClioConnection() {
       disconnectBtn.style.display = 'inline-block';
       refreshBtn.style.display = 'inline-block';
       placeholder.style.display = 'none';
+      document.getElementById('billing-date-filter').style.display = 'flex';
+      // Set default date values in inputs
+      document.getElementById('billing-date-from').value = _billingDateFrom;
+      document.getElementById('billing-date-to').value = _billingDateTo;
       loadBillingData();
     } else {
       statusText.textContent = 'Not connected to Clio';
@@ -13956,13 +13976,68 @@ async function checkClioConnection() {
   }
 }
 
+var _billingDateFrom = '';
+var _billingDateTo = '';
+
+function setBillingDateRange(preset) {
+  var now = new Date();
+  var from = new Date();
+  var to = now;
+
+  if (preset === '7d') { from.setDate(now.getDate() - 7); }
+  else if (preset === '30d') { from.setDate(now.getDate() - 30); }
+  else if (preset === '90d') { from.setDate(now.getDate() - 90); }
+  else if (preset === 'ytd') { from = new Date(now.getFullYear(), 0, 1); }
+  else if (preset === 'all') { from = null; to = null; }
+
+  // Update inputs
+  document.getElementById('billing-date-from').value = from ? from.toISOString().split('T')[0] : '';
+  document.getElementById('billing-date-to').value = to ? to.toISOString().split('T')[0] : '';
+
+  // Update button styles
+  document.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+    btn.style.border = '1px solid #ccc';
+    btn.style.background = '#fff';
+    btn.style.color = '#333';
+    btn.style.fontWeight = 'normal';
+  });
+  event.target.style.border = '1px solid #4472c4';
+  event.target.style.background = '#eef3fc';
+  event.target.style.color = '#4472c4';
+  event.target.style.fontWeight = '600';
+
+  _billingDateFrom = from ? from.toISOString().split('T')[0] : '';
+  _billingDateTo = to ? to.toISOString().split('T')[0] : '';
+
+  loadBillingData();
+}
+
+// Initialize with last 90 days
+(function() {
+  var now = new Date();
+  var from = new Date();
+  from.setDate(now.getDate() - 90);
+  _billingDateFrom = from.toISOString().split('T')[0];
+  _billingDateTo = now.toISOString().split('T')[0];
+})();
+
 async function loadBillingData() {
   const statusText = document.getElementById('clio-status-text');
   const origText = statusText.innerHTML;
   statusText.innerHTML = origText.split('|')[0] + ' | <span style="color:#4472c4">Loading billing data...</span>';
 
+  // Read date range from inputs (custom may override presets)
+  var dateFrom = document.getElementById('billing-date-from') ? document.getElementById('billing-date-from').value : _billingDateFrom;
+  var dateTo = document.getElementById('billing-date-to') ? document.getElementById('billing-date-to').value : _billingDateTo;
+
   try {
-    const res = await fetch('/api/clio/billing');
+    var url = '/api/clio/billing';
+    var params = [];
+    if (dateFrom) params.push('date_from=' + dateFrom);
+    if (dateTo) params.push('date_to=' + dateTo);
+    if (params.length) url += '?' + params.join('&');
+
+    const res = await fetch(url);
     if (!res.ok) throw new Error('Failed to fetch billing data');
     const data = await res.json();
 
