@@ -112,8 +112,10 @@ module.exports = async function handler(req, res) {
       const totalBilled = results.activities
         .reduce((sum, a) => sum + (a.total || 0), 0);
 
+      // Clio returns quantity in seconds - convert to hours
+      const totalHoursConverted = totalHours / 3600;
       results.summary = {
-        total_hours: Math.round(totalHours * 100) / 100,
+        total_hours: Math.round(totalHoursConverted * 100) / 100,
         total_billed: Math.round(totalBilled * 100) / 100,
         activity_count: results.activities.length,
       };

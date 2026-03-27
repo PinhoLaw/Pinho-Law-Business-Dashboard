@@ -14070,7 +14070,7 @@ async function loadBillingData() {
           '<td>' + (a.matter_description || '') + '</td>' +
           '<td>' + (a.user_name || '') + '</td>' +
           '<td><span class="s ' + typeClass + '">' + typeLabel + '</span></td>' +
-          '<td>' + (a.quantity || '') + '</td>' +
+          '<td>' + (a.quantity ? Math.round(a.quantity / 3600 * 100) / 100 : '') + '</td>' +
           '<td>$' + (a.price || 0) + '</td>' +
           '<td><b>$' + (a.total || 0).toLocaleString() + '</b></td>' +
           '<td>' + (a.note || '') + '</td>';
