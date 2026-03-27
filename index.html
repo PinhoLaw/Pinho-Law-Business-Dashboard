@@ -202,6 +202,11 @@ tr.new-row td:first-child{background:#eef6ff !important}
 .upload-btn input[type="file"]{display:none}
 .upload-status{font-size:10px;color:#548235;font-weight:600;margin-left:6px;display:none}
 .upload-status.error{color:#c0504d}
+
+/* ── Billing table sticky headers ── */
+#tBillAct th, #tBillInv th{position:sticky;top:0;z-index:3;background:#f0f0f0;box-shadow:0 1px 0 #d0d0d0}
+#tBillAct td:first-child, #tBillInv td:first-child{position:sticky;left:0;z-index:1;background:inherit}
+#tBillAct th:first-child, #tBillInv th:first-child{position:sticky;left:0;top:0;z-index:4;background:#f0f0f0}
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
