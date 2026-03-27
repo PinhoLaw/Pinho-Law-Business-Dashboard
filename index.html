@@ -13112,14 +13112,15 @@ Hoje, representantes da empresa meio entraram em contato após descobrirem esse 
     <div class="tbl-wrap">
       <table class="xl" id="tBillInv">
         <thead><tr>
-          <th><span class="sort-label" onclick="S('tBillInv',0)">Bill # <span class="a">&#8597;</span></span></th>
-          <th><span class="sort-label" onclick="S('tBillInv',1)">Issued <span class="a">&#8597;</span></span></th>
-          <th><span class="sort-label" onclick="S('tBillInv',2)">Due <span class="a">&#8597;</span></span></th>
-          <th><span class="sort-label" onclick="S('tBillInv',3)">Matter # <span class="a">&#8597;</span></span></th>
-          <th><span class="sort-label" onclick="S('tBillInv',4)">Matter <span class="a">&#8597;</span></span></th>
-          <th><span class="sort-label" onclick="S('tBillInv',5)">Total <span class="a">&#8597;</span></span></th>
-          <th><span class="sort-label" onclick="S('tBillInv',6)">Balance <span class="a">&#8597;</span></span></th>
-          <th><span class="sort-label" onclick="S('tBillInv',7)">Status <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',0)">Invoice # <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',1)">Client <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',2)">Matter # <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',3)">Matter <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',4)">Issued <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',5)">Due <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',6)">Total <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',7)">Balance <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',8)">Status <span class="a">&#8597;</span></span></th>
         </tr></thead>
         <tbody></tbody>
       </table>
@@ -14009,10 +14010,11 @@ async function loadBillingData() {
         var stateClass = b.state === 'paid' ? 's-g' : (b.state === 'overdue' ? 's-r' : 's-y');
         tr.innerHTML =
           '<td><b>' + (b.number || '') + '</b></td>' +
+          '<td>' + (b.client_name || '') + '</td>' +
+          '<td><b>' + (b.matter_number || '') + '</b></td>' +
+          '<td>' + (b.matter_description || '') + '</td>' +
           '<td>' + (b.issued_at || '') + '</td>' +
           '<td>' + (b.due_at || '') + '</td>' +
-          '<td>' + (b.matter_number || '') + '</td>' +
-          '<td>' + (b.matter_description || '') + '</td>' +
           '<td>$' + (b.total || 0).toLocaleString() + '</td>' +
           '<td><b>$' + (b.balance || 0).toLocaleString() + '</b></td>' +
           '<td><span class="s ' + stateClass + '">' + (b.state || '') + '</span></td>';

@@ -22,13 +22,22 @@ module.exports = async function handler(req, res) {
     // Fetch activities (time entries + expense entries)
     if (type === 'all' || type === 'activities') {
       const activityParams = {
-        fields: 'id,type,date,quantity,price,total,note',
+        fields: 'id,type,date,quantity,price,total,note,matter{id,display_number,description},user{id,name}',
         order: 'date(desc)',
       };
       if (date_from) activityParams['created_since'] = date_from;
       if (date_to) activityParams['created_before'] = date_to;
 
-      const activities = await fetchAllPages(accessToken, '/activities.json', activityParams);
+      let activities = [];
+      try {
+        activities = await fetchAllPages(accessToken, '/activities.json', activityParams);
+      } catch (e) {
+        // If matter/user fields fail, try without them
+        console.log('Retrying activities without association fields:', e.message);
+        activityParams.fields = 'id,type,date,quantity,price,total,note';
+        activities = await fetchAllPages(accessToken, '/activities.json', activityParams);
+      }
+
       results.activities = activities.map(a => ({
         id: a.id,
         type: a.type,
@@ -37,31 +46,60 @@ module.exports = async function handler(req, res) {
         price: a.price,
         total: a.total,
         note: a.note || '',
-        matter_number: (a.matter && a.matter.display_number) ? a.matter.display_number : '',
-        matter_description: (a.matter && a.matter.description) ? a.matter.description : '',
-        user_name: (a.user && a.user.name) ? a.user.name : '',
+        matter_number: a.matter ? (a.matter.display_number || a.matter.id || '') : '',
+        matter_description: a.matter ? (a.matter.description || '') : '',
+        user_name: a.user ? (a.user.name || '') : '',
       }));
     }
 
-    // Fetch bills
+    // Fetch bills with client and matter associations
     if (type === 'all' || type === 'bills') {
       const billParams = {
-        fields: 'id,number,issued_at,due_at,total,balance,state',
+        fields: 'id,number,issued_at,due_at,total,balance,state,client{id,name},matters{id,display_number,description}',
         order: 'issued_at(desc)',
       };
 
-      const bills = await fetchAllPages(accessToken, '/bills.json', billParams);
-      results.bills = bills.map(b => ({
-        id: b.id,
-        number: b.number,
-        issued_at: b.issued_at,
-        due_at: b.due_at,
-        total: b.total,
-        balance: b.balance,
-        state: b.state,
-        matter_number: (b.matter && b.matter.display_number) ? b.matter.display_number : '',
-        matter_description: (b.matter && b.matter.description) ? b.matter.description : '',
-      }));
+      let bills = [];
+      try {
+        bills = await fetchAllPages(accessToken, '/bills.json', billParams);
+      } catch (e) {
+        // If association fields fail, try simpler fields
+        console.log('Retrying bills without association fields:', e.message);
+        billParams.fields = 'id,number,issued_at,due_at,total,balance,state';
+        bills = await fetchAllPages(accessToken, '/bills.json', billParams);
+      }
+
+      results.bills = bills.map(b => {
+        // Extract matter info - could be in 'matter', 'matters', or absent
+        let matterNum = '';
+        let matterDesc = '';
+        if (b.matters && b.matters.length > 0) {
+          matterNum = b.matters[0].display_number || b.matters[0].id || '';
+          matterDesc = b.matters[0].description || '';
+        } else if (b.matter) {
+          matterNum = b.matter.display_number || b.matter.id || '';
+          matterDesc = b.matter.description || '';
+        }
+
+        // Extract client info
+        let clientName = '';
+        if (b.client) {
+          clientName = b.client.name || '';
+        }
+
+        return {
+          id: b.id,
+          number: b.number,
+          issued_at: b.issued_at,
+          due_at: b.due_at,
+          total: b.total,
+          balance: b.balance,
+          state: b.state,
+          client_name: clientName,
+          matter_number: matterNum,
+          matter_description: matterDesc,
+        };
+      });
     }
 
     // Compute summary
