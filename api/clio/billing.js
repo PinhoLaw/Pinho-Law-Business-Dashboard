@@ -48,6 +48,14 @@ module.exports = async function handler(req, res) {
         });
       }
 
+      // Deduplicate activities by ID
+      const seenActIds = new Set();
+      activities = activities.filter(a => {
+        if (seenActIds.has(a.id)) return false;
+        seenActIds.add(a.id);
+        return true;
+      });
+
       const activitiesCapped = activities.length >= MAX_PAGES * 200;
 
       results.activities = activities.map(a => ({
@@ -96,6 +104,14 @@ module.exports = async function handler(req, res) {
 
       // Filter out void and deleted bills
       bills = bills.filter(b => b.state !== 'void' && b.state !== 'deleted');
+
+      // Deduplicate bills by ID (Clio returns duplicates when bills have multiple matters)
+      const seenBillIds = new Set();
+      bills = bills.filter(b => {
+        if (seenBillIds.has(b.id)) return false;
+        seenBillIds.add(b.id);
+        return true;
+      });
 
       const billsCapped = bills.length >= MAX_PAGES * 200;
 
