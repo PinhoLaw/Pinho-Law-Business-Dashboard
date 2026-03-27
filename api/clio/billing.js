@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
     // Fetch activities (time entries + expense entries)
     if (type === 'all' || type === 'activities') {
       const activityParams = {
-        fields: 'id,type,date,quantity,price,total,note,matter{id,display_number,description},user{id,name}',
+        fields: 'id,type,date,quantity,price,total,note',
         order: 'date(desc)',
       };
       if (date_from) activityParams['created_since'] = date_from;
@@ -36,17 +36,17 @@ module.exports = async function handler(req, res) {
         quantity: a.quantity,
         price: a.price,
         total: a.total,
-        note: a.note,
-        matter_number: a.matter ? a.matter.display_number : '',
-        matter_description: a.matter ? a.matter.description : '',
-        user_name: a.user ? a.user.name : '',
+        note: a.note || '',
+        matter_number: (a.matter && a.matter.display_number) ? a.matter.display_number : '',
+        matter_description: (a.matter && a.matter.description) ? a.matter.description : '',
+        user_name: (a.user && a.user.name) ? a.user.name : '',
       }));
     }
 
     // Fetch bills
     if (type === 'all' || type === 'bills') {
       const billParams = {
-        fields: 'id,number,issued_at,due_at,total,balance,state,matter{id,display_number,description}',
+        fields: 'id,number,issued_at,due_at,total,balance,state',
         order: 'issued_at(desc)',
       };
 
@@ -59,8 +59,8 @@ module.exports = async function handler(req, res) {
         total: b.total,
         balance: b.balance,
         state: b.state,
-        matter_number: b.matter ? b.matter.display_number : '',
-        matter_description: b.matter ? b.matter.description : '',
+        matter_number: (b.matter && b.matter.display_number) ? b.matter.display_number : '',
+        matter_description: (b.matter && b.matter.description) ? b.matter.description : '',
       }));
     }
 
