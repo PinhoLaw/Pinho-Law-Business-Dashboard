@@ -195,7 +195,15 @@ tr.new-row td:first-child{background:#eef6ff !important}
   .s{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   tr.deadline-overdue td,tr.deadline-soon td,tr.row-flagged td{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+
+/* ── Upload button ── */
+.upload-btn{font-size:10.5px;padding:3px 9px;border:1px solid #4472c4;background:#eef3fc;cursor:pointer;border-radius:1px;display:inline-block;color:#4472c4;font-weight:600;transition:background .15s}
+.upload-btn:hover{background:#d6e4f7;border-color:#2b5797}
+.upload-btn input[type="file"]{display:none}
+.upload-status{font-size:10px;color:#548235;font-weight:600;margin-left:6px;display:none}
+.upload-status.error{color:#c0504d}
 </style>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -240,6 +248,7 @@ tr.new-row td:first-child{background:#eef6ff !important}
     <button onclick="tab('mycases',this)">My Cases (67)</button>
     <button onclick="tab('closed',this)">Closed Cases (45)</button>
     <button onclick="tab('xref',this)">Cross-Reference</button>
+    <button onclick="tab('billing',this)" style="color:#4472c4;font-weight:600">Billing (Clio)</button>
   </div>
 
 <!-- ==================== SHEET1 ==================== -->
@@ -6410,6 +6419,8 @@ Hoje, representantes da empresa meio entraram em contato após descobrirem esse 
     <button class="undo-btn" id="undo-t2" onclick="undoEdit('t2')" disabled>Undo</button>
     <button class="undo-btn" id="redo-t2" onclick="redoEdit('t2')" disabled>Redo</button>
     <button class="add-row-btn" onclick="addRow('t2')">+ Add Row</button>
+    <label class="upload-btn" title="Upload Business Ongoing Activities .xlsx file">Upload .xlsx<input type="file" accept=".xlsx,.xls,.csv" onchange="handleUpload(this,'t2','ongoing-upload-status')"></label>
+    <span class="upload-status" id="ongoing-upload-status"></span>
     <span style="font-size:10px;color:#aaa">190 matters · Business_Ongoing_Activities</span>
   </div>
   <div class="tbl-wrap">
@@ -9643,6 +9654,8 @@ Hoje, representantes da empresa meio entraram em contato após descobrirem esse 
     <button class="undo-btn" id="undo-t4" onclick="undoEdit('t4')" disabled>Undo</button>
     <button class="undo-btn" id="redo-t4" onclick="redoEdit('t4')" disabled>Redo</button>
     <button class="add-row-btn" onclick="addRow('t4')">+ Add Row</button>
+    <label class="upload-btn" title="Upload Litigation Cases .xlsx file">Upload .xlsx<input type="file" accept=".xlsx,.xls,.csv" onchange="handleUpload(this,'t4','mycases-upload-status')"></label>
+    <span class="upload-status" id="mycases-upload-status"></span>
     <span style="font-size:10px;color:#aaa">67 active cases · Litigation file</span>
   </div>
   <div class="tbl-wrap">
@@ -13036,6 +13049,91 @@ Hoje, representantes da empresa meio entraram em contato após descobrirem esse 
   <div class="row-count">150 cross-stage clients (top 150 by stage count)</div>
 </div>
 
+<!-- ==================== BILLING (CLIO) ==================== -->
+<div id="billing" class="sheet">
+  <div style="font-size:13px;font-weight:700;color:#4472c4;margin-bottom:6px">Billing — Clio Integration</div>
+
+  <!-- Connection Status Bar -->
+  <div id="clio-connection" style="background:#f7f9fc;border:1px solid #d0d8e8;border-radius:3px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
+    <div id="clio-status-text" style="font-size:12px;color:#555">
+      Checking Clio connection...
+    </div>
+    <div>
+      <button id="clio-connect-btn" onclick="connectClio()" style="display:none;padding:5px 14px;font-size:11px;font-weight:600;color:#fff;background:#4472c4;border:1px solid #2b5797;border-radius:2px;cursor:pointer">Connect to Clio</button>
+      <button id="clio-disconnect-btn" onclick="disconnectClio()" style="display:none;padding:5px 14px;font-size:11px;font-weight:500;color:#c0504d;background:#fff;border:1px solid #ccc;border-radius:2px;cursor:pointer">Disconnect</button>
+      <button id="clio-refresh-btn" onclick="loadBillingData()" style="display:none;padding:5px 14px;font-size:11px;font-weight:500;color:#548235;background:#fff;border:1px solid #ccc;border-radius:2px;cursor:pointer;margin-right:6px">Refresh Data</button>
+    </div>
+  </div>
+
+  <!-- KPI Row -->
+  <div class="krow" id="billing-kpi" style="display:none">
+    <div><div class="v" style="color:#4472c4" id="kpi-hours">—</div><div class="l">Total Hours</div></div>
+    <div><div class="v" style="color:#548235" id="kpi-billed">—</div><div class="l">Total Billed</div></div>
+    <div><div class="v" style="color:#c0504d" id="kpi-outstanding">—</div><div class="l">Outstanding</div></div>
+    <div><div class="v" style="color:#7f6084" id="kpi-bills">—</div><div class="l">Total Bills</div></div>
+  </div>
+
+  <!-- Activities Table -->
+  <div id="billing-activities-section" style="display:none">
+    <div style="font-size:12px;font-weight:600;color:#375623;margin:12px 0 6px">Time & Expense Entries</div>
+    <div class="ctrl-bar">
+      <input type="text" id="billingActS" class="srch" placeholder="Search activities..." oninput="flt('tBillAct','billingActS')">
+      <span class="rc" id="rc_tBillAct">Loading...</span>
+      <button class="clr-btn" onclick="clearFilters('tBillAct')">&#10005; Clear filters</button>
+      <span class="export-btn" onclick="exportCSV('tBillAct')">Export CSV</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="xl" id="tBillAct">
+        <thead><tr>
+          <th><span class="sort-label" onclick="S('tBillAct',0)">Date <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillAct',1)">Matter # <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillAct',2)">Matter <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillAct',3)">User <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillAct',4)">Type <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillAct',5)">Hours/Qty <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillAct',6)">Rate <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillAct',7)">Total <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillAct',8)">Note <span class="a">&#8597;</span></span></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bills Table -->
+  <div id="billing-bills-section" style="display:none">
+    <div style="font-size:12px;font-weight:600;color:#375623;margin:12px 0 6px">Bills & Invoices</div>
+    <div class="ctrl-bar">
+      <input type="text" id="billingBillS" class="srch" placeholder="Search bills..." oninput="flt('tBillInv','billingBillS')">
+      <span class="rc" id="rc_tBillInv">Loading...</span>
+      <button class="clr-btn" onclick="clearFilters('tBillInv')">&#10005; Clear filters</button>
+      <span class="export-btn" onclick="exportCSV('tBillInv')">Export CSV</span>
+    </div>
+    <div class="tbl-wrap">
+      <table class="xl" id="tBillInv">
+        <thead><tr>
+          <th><span class="sort-label" onclick="S('tBillInv',0)">Bill # <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',1)">Issued <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',2)">Due <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',3)">Matter # <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',4)">Matter <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',5)">Total <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',6)">Balance <span class="a">&#8597;</span></span></th>
+          <th><span class="sort-label" onclick="S('tBillInv',7)">Status <span class="a">&#8597;</span></span></th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Not connected placeholder -->
+  <div id="billing-placeholder" style="text-align:center;padding:60px 20px;color:#999">
+    <div style="font-size:36px;margin-bottom:10px">&#9783;</div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px">Connect your Clio account to view billing data</div>
+    <div style="font-size:11px">Click "Connect to Clio" above to authorize access to your firm's billing information.</div>
+  </div>
+</div>
+
 </div><!-- /content -->
 
 <!-- FOOTER -->
@@ -13807,6 +13905,262 @@ saveEditsToLS=function(tid){
 };
 
 /* ═══════════════════════════════════════════════════════════
+   CLIO BILLING INTEGRATION
+   ═══════════════════════════════════════════════════════════ */
+function connectClio() {
+  window.location.href = '/api/clio/authorize';
+}
+
+async function disconnectClio() {
+  try {
+    await fetch('/api/clio/disconnect', { method: 'POST' });
+    checkClioConnection();
+    document.getElementById('billing-kpi').style.display = 'none';
+    document.getElementById('billing-activities-section').style.display = 'none';
+    document.getElementById('billing-bills-section').style.display = 'none';
+    document.getElementById('billing-placeholder').style.display = 'block';
+  } catch (err) {
+    console.error('Disconnect error:', err);
+  }
+}
+
+async function checkClioConnection() {
+  try {
+    const res = await fetch('/api/clio/status');
+    const data = await res.json();
+    const statusText = document.getElementById('clio-status-text');
+    const connectBtn = document.getElementById('clio-connect-btn');
+    const disconnectBtn = document.getElementById('clio-disconnect-btn');
+    const refreshBtn = document.getElementById('clio-refresh-btn');
+    const placeholder = document.getElementById('billing-placeholder');
+
+    if (data.connected) {
+      statusText.innerHTML = '<span style="color:#548235;font-weight:600">&#10003; Connected</span> as <b>' + data.userName + '</b> (' + data.userEmail + ')';
+      connectBtn.style.display = 'none';
+      disconnectBtn.style.display = 'inline-block';
+      refreshBtn.style.display = 'inline-block';
+      placeholder.style.display = 'none';
+      loadBillingData();
+    } else {
+      statusText.textContent = 'Not connected to Clio';
+      connectBtn.style.display = 'inline-block';
+      disconnectBtn.style.display = 'none';
+      refreshBtn.style.display = 'none';
+      placeholder.style.display = 'block';
+    }
+  } catch (err) {
+    console.error('Connection check error:', err);
+    document.getElementById('clio-status-text').textContent = 'Unable to check connection';
+    document.getElementById('clio-connect-btn').style.display = 'inline-block';
+  }
+}
+
+async function loadBillingData() {
+  const statusText = document.getElementById('clio-status-text');
+  const origText = statusText.innerHTML;
+  statusText.innerHTML = origText.split('|')[0] + ' | <span style="color:#4472c4">Loading billing data...</span>';
+
+  try {
+    const res = await fetch('/api/clio/billing');
+    if (!res.ok) throw new Error('Failed to fetch billing data');
+    const data = await res.json();
+
+    // Update KPIs
+    if (data.summary) {
+      document.getElementById('billing-kpi').style.display = 'flex';
+      document.getElementById('kpi-hours').textContent = data.summary.total_hours || '0';
+      document.getElementById('kpi-billed').textContent = '$' + (data.summary.total_billed || 0).toLocaleString();
+      document.getElementById('kpi-outstanding').textContent = '$' + (data.summary.total_outstanding || 0).toLocaleString();
+      document.getElementById('kpi-bills').textContent = data.summary.bill_count || '0';
+    }
+
+    // Populate activities table
+    if (data.activities && data.activities.length > 0) {
+      document.getElementById('billing-activities-section').style.display = 'block';
+      const actTbody = document.querySelector('#tBillAct tbody');
+      actTbody.innerHTML = '';
+      data.activities.forEach(function(a) {
+        const tr = document.createElement('tr');
+        var typeClass = a.type === 'TimeEntry' ? 's-g' : 's-y';
+        var typeLabel = a.type === 'TimeEntry' ? 'Time' : 'Expense';
+        tr.innerHTML =
+          '<td>' + (a.date || '') + '</td>' +
+          '<td><b>' + (a.matter_number || '') + '</b></td>' +
+          '<td>' + (a.matter_description || '') + '</td>' +
+          '<td>' + (a.user_name || '') + '</td>' +
+          '<td><span class="s ' + typeClass + '">' + typeLabel + '</span></td>' +
+          '<td>' + (a.quantity || '') + '</td>' +
+          '<td>$' + (a.price || 0) + '</td>' +
+          '<td><b>$' + (a.total || 0).toLocaleString() + '</b></td>' +
+          '<td>' + (a.note || '') + '</td>';
+        actTbody.appendChild(tr);
+      });
+      buildFilters('tBillAct');
+      updateCount('tBillAct');
+    }
+
+    // Populate bills table
+    if (data.bills && data.bills.length > 0) {
+      document.getElementById('billing-bills-section').style.display = 'block';
+      const billTbody = document.querySelector('#tBillInv tbody');
+      billTbody.innerHTML = '';
+      data.bills.forEach(function(b) {
+        const tr = document.createElement('tr');
+        var stateClass = b.state === 'paid' ? 's-g' : (b.state === 'overdue' ? 's-r' : 's-y');
+        tr.innerHTML =
+          '<td><b>' + (b.number || '') + '</b></td>' +
+          '<td>' + (b.issued_at || '') + '</td>' +
+          '<td>' + (b.due_at || '') + '</td>' +
+          '<td>' + (b.matter_number || '') + '</td>' +
+          '<td>' + (b.matter_description || '') + '</td>' +
+          '<td>$' + (b.total || 0).toLocaleString() + '</td>' +
+          '<td><b>$' + (b.balance || 0).toLocaleString() + '</b></td>' +
+          '<td><span class="s ' + stateClass + '">' + (b.state || '') + '</span></td>';
+        billTbody.appendChild(tr);
+      });
+      buildFilters('tBillInv');
+      updateCount('tBillInv');
+    }
+
+    statusText.innerHTML = origText.split('|')[0];
+  } catch (err) {
+    console.error('Billing data error:', err);
+    statusText.innerHTML = origText.split('|')[0] + ' | <span style="color:#c0504d">Error loading data</span>';
+  }
+}
+
+// Check for OAuth callback params on page load
+function checkClioCallback() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('clio_connected') === 'true') {
+    // Clean URL
+    window.history.replaceState({}, '', '/');
+    // Switch to billing tab
+    var billingBtn = document.querySelector('.tab-strip button:last-child');
+    if (billingBtn) billingBtn.click();
+  }
+  if (params.get('clio_error')) {
+    alert('Clio connection error: ' + params.get('clio_error'));
+    window.history.replaceState({}, '', '/');
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   EXCEL UPLOAD & SYNC
+   ═══════════════════════════════════════════════════════════ */
+function handleUpload(input, tid, statusId) {
+  const file = input.files[0];
+  if (!file) return;
+  const statusEl = document.getElementById(statusId);
+  statusEl.style.display = 'inline';
+  statusEl.className = 'upload-status';
+  statusEl.textContent = 'Reading file...';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+
+      if (json.length < 2) {
+        statusEl.className = 'upload-status error';
+        statusEl.textContent = 'File appears empty';
+        return;
+      }
+
+      populateTable(tid, json);
+      statusEl.className = 'upload-status';
+      statusEl.textContent = '\u2713 Loaded ' + (json.length - 1) + ' rows from ' + file.name;
+      logActivity(tid, 'Uploaded ' + file.name + ' (' + (json.length - 1) + ' rows)');
+
+      // Fade out status after 5s
+      setTimeout(function() { statusEl.style.display = 'none'; }, 5000);
+    } catch (err) {
+      statusEl.className = 'upload-status error';
+      statusEl.textContent = 'Error: ' + err.message;
+      console.error('Upload error:', err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  // Reset input so same file can be re-uploaded
+  input.value = '';
+}
+
+function populateTable(tid, rows) {
+  const table = document.getElementById(tid);
+  if (!table) return;
+
+  // First row = headers from spreadsheet
+  const headers = rows[0];
+  const dataRows = rows.slice(1);
+
+  // Get existing table column count
+  const existingCols = table.querySelectorAll('thead th').length;
+
+  // Rebuild thead if column count differs
+  if (headers.length !== existingCols) {
+    const thead = table.querySelector('thead');
+    thead.innerHTML = '<tr>' + headers.map(function(h, i) {
+      const label = String(h || 'Column ' + (i + 1)).trim();
+      return '<th><span class="sort-label" onclick="S(\'' + tid + '\',' + i + ')">' +
+        label + ' <span class="a">\u2195</span></span></th>';
+    }).join('') + '</tr>';
+  }
+
+  // Rebuild tbody
+  const tbody = table.querySelector('tbody');
+  tbody.innerHTML = '';
+
+  dataRows.forEach(function(row) {
+    // Skip completely empty rows
+    if (row.every(function(c) { return String(c).trim() === ''; })) return;
+
+    const tr = document.createElement('tr');
+    const numCols = Math.max(headers.length, row.length);
+    for (var i = 0; i < numCols; i++) {
+      const td = document.createElement('td');
+      var val = i < row.length ? String(row[i]) : '';
+
+      // Bold the first column (ID column) to match existing style
+      if (i === 0 && val) {
+        td.innerHTML = '<b>' + escapeHtml(val) + '</b>';
+      } else {
+        // Detect status-like values and add badges
+        var lower = val.toLowerCase().trim();
+        if (lower === 'open' || lower === 'active' || lower === 'ongoing') {
+          td.innerHTML = '<span class="s s-g">' + escapeHtml(val) + '</span>';
+        } else if (lower === 'closed' || lower === 'inactive' || lower === 'dissolved') {
+          td.innerHTML = '<span class="s s-r">' + escapeHtml(val) + '</span>';
+        } else if (lower === 'pending' || lower === 'on hold') {
+          td.innerHTML = '<span class="s s-y">' + escapeHtml(val) + '</span>';
+        } else if (lower === 'litigation') {
+          td.innerHTML = '<span class="s s-o">' + escapeHtml(val) + '</span>';
+        } else {
+          td.textContent = val;
+        }
+      }
+      // Make cells editable on click
+      td.ondblclick = function() { startEdit(this); };
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+
+  // Rebuild filters and update count
+  buildFilters(tid);
+  updateCount(tid);
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ═══════════════════════════════════════════════════════════
    INIT
    ═══════════════════════════════════════════════════════════ */
 window.addEventListener('DOMContentLoaded',function(){
@@ -13815,6 +14169,9 @@ window.addEventListener('DOMContentLoaded',function(){
   scanDeadlines();
   makeStatusDropdowns();
   renderActivityLog();
+  // Clio integration
+  checkClioCallback();
+  checkClioConnection();
 });
 </script>
 </body>
