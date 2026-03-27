@@ -57,6 +57,7 @@ module.exports = async function handler(req, res) {
       const billParams = {
         fields: 'id,number,issued_at,due_at,total,balance,state,client{id,name},matters{id,display_number,description}',
         order: 'issued_at(desc)',
+        status: 'awaiting_payment,draft,pending_approval',
       };
 
       let bills = [];
