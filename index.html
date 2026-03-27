@@ -13073,11 +13073,11 @@ Hoje, representantes da empresa meio entraram em contato após descobrirem esse 
   <!-- Date Range Filter -->
   <div id="billing-date-filter" style="display:none;background:#f7f9fc;border:1px solid #d0d8e8;border-radius:3px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
     <span style="font-size:11px;font-weight:600;color:#555">Date Range:</span>
-    <button class="date-preset-btn" onclick="setBillingDateRange('7d')" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Last 7 Days</button>
-    <button class="date-preset-btn" onclick="setBillingDateRange('30d')" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Last 30 Days</button>
-    <button class="date-preset-btn active" onclick="setBillingDateRange('90d')" style="padding:3px 10px;font-size:10.5px;border:1px solid #4472c4;background:#eef3fc;color:#4472c4;border-radius:2px;cursor:pointer;font-weight:600">Last 90 Days</button>
-    <button class="date-preset-btn" onclick="setBillingDateRange('ytd')" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Year to Date</button>
-    <button class="date-preset-btn" onclick="setBillingDateRange('all')" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">All Time</button>
+    <button class="date-preset-btn" data-preset="7d" onclick="setBillingDateRange('7d',this)" style="padding:3px 10px;font-size:10.5px;border:1px solid #4472c4;background:#eef3fc;color:#4472c4;border-radius:2px;cursor:pointer;font-weight:600">Last 7 Days</button>
+    <button class="date-preset-btn" data-preset="30d" onclick="setBillingDateRange('30d',this)" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Last 30 Days</button>
+    <button class="date-preset-btn" data-preset="90d" onclick="setBillingDateRange('90d',this)" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Last 90 Days</button>
+    <button class="date-preset-btn" data-preset="ytd" onclick="setBillingDateRange('ytd',this)" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">Year to Date</button>
+    <button class="date-preset-btn" data-preset="all" onclick="setBillingDateRange('all',this)" style="padding:3px 10px;font-size:10.5px;border:1px solid #ccc;background:#fff;border-radius:2px;cursor:pointer">All Time</button>
     <span style="font-size:11px;color:#999;margin-left:4px">|</span>
     <span style="font-size:11px;color:#555">Custom:</span>
     <input type="date" id="billing-date-from" style="font-size:10.5px;padding:2px 6px;border:1px solid #ccc;border-radius:2px">
@@ -13986,7 +13986,7 @@ async function checkClioConnection() {
 var _billingDateFrom = '';
 var _billingDateTo = '';
 
-function setBillingDateRange(preset) {
+function setBillingDateRange(preset, btn) {
   var now = new Date();
   var from = new Date();
   var to = now;
@@ -14002,16 +14002,18 @@ function setBillingDateRange(preset) {
   document.getElementById('billing-date-to').value = to ? to.toISOString().split('T')[0] : '';
 
   // Update button styles
-  document.querySelectorAll('.date-preset-btn').forEach(function(btn) {
-    btn.style.border = '1px solid #ccc';
-    btn.style.background = '#fff';
-    btn.style.color = '#333';
-    btn.style.fontWeight = 'normal';
+  document.querySelectorAll('.date-preset-btn').forEach(function(b) {
+    b.style.border = '1px solid #ccc';
+    b.style.background = '#fff';
+    b.style.color = '#333';
+    b.style.fontWeight = 'normal';
   });
-  event.target.style.border = '1px solid #4472c4';
-  event.target.style.background = '#eef3fc';
-  event.target.style.color = '#4472c4';
-  event.target.style.fontWeight = '600';
+  if (btn) {
+    btn.style.border = '1px solid #4472c4';
+    btn.style.background = '#eef3fc';
+    btn.style.color = '#4472c4';
+    btn.style.fontWeight = '600';
+  }
 
   _billingDateFrom = from ? from.toISOString().split('T')[0] : '';
   _billingDateTo = to ? to.toISOString().split('T')[0] : '';
@@ -14019,11 +14021,11 @@ function setBillingDateRange(preset) {
   loadBillingData();
 }
 
-// Initialize with last 90 days
+// Initialize with last 7 days (fastest, most accurate)
 (function() {
   var now = new Date();
   var from = new Date();
-  from.setDate(now.getDate() - 90);
+  from.setDate(now.getDate() - 7);
   _billingDateFrom = from.toISOString().split('T')[0];
   _billingDateTo = now.toISOString().split('T')[0];
 })();
