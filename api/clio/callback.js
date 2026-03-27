@@ -27,14 +27,23 @@ module.exports = async function handler(req, res) {
     const tokenData = await exchangeCodeForTokens(code);
     const expiresAt = new Date(Date.now() + tokenData.expires_in * 1000);
 
-    // Fetch user info from Clio
-    const userInfo = await clioApiGet(tokenData.access_token, '/users/who_am_i.json', {
-      fields: 'id,name,email',
-    });
+    // Try to fetch user info, but don't fail if it's forbidden
+    let userEmail = 'admin@pinholaw.com';
+    let userName = 'Pinho Law';
+    let userId = 'default';
 
-    const userEmail = userInfo.data.email || 'default@pinholaw.com';
-    const userName = userInfo.data.name || 'Clio User';
-    const userId = String(userInfo.data.id);
+    try {
+      const userInfo = await clioApiGet(tokenData.access_token, '/users/who_am_i.json', {
+        fields: 'id,name,email',
+      });
+      if (userInfo && userInfo.data) {
+        userEmail = userInfo.data.email || userEmail;
+        userName = userInfo.data.name || userName;
+        userId = String(userInfo.data.id || userId);
+      }
+    } catch (userErr) {
+      console.log('Could not fetch Clio user info (using defaults):', userErr.message);
+    }
 
     // Store tokens in Supabase
     const supabase = getSupabase();
