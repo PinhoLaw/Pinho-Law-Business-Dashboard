@@ -13091,7 +13091,9 @@ Hoje, representantes da empresa meio entraram em contato após descobrirem esse 
     <div><div class="v" style="color:#4472c4" id="kpi-hours">—</div><div class="l">Total Hours</div></div>
     <div><div class="v" style="color:#548235" id="kpi-billed">—</div><div class="l">Total Billed</div></div>
     <div><div class="v" style="color:#c0504d" id="kpi-outstanding">—</div><div class="l">Outstanding</div></div>
-    <div><div class="v" style="color:#7f6084" id="kpi-bills">—</div><div class="l">Total Bills</div></div>
+    <div><div class="v" style="color:#548235" id="kpi-paid">—</div><div class="l">Paid</div></div>
+    <div><div class="v" style="color:#7f6084" id="kpi-bills">—</div><div class="l">Bills</div></div>
+    <div><div class="v" style="color:#999" id="kpi-unbilled">—</div><div class="l">Unbilled Entries</div></div>
   </div>
 
   <!-- Activities Table -->
@@ -14052,7 +14054,15 @@ async function loadBillingData() {
       document.getElementById('kpi-hours').textContent = data.summary.total_hours || '0';
       document.getElementById('kpi-billed').textContent = '$' + (data.summary.total_billed || 0).toLocaleString();
       document.getElementById('kpi-outstanding').textContent = '$' + (data.summary.total_outstanding || 0).toLocaleString();
-      document.getElementById('kpi-bills').textContent = data.summary.bill_count || '0';
+      document.getElementById('kpi-paid').textContent = '$' + (data.summary.total_paid || 0).toLocaleString();
+      var billLabel = (data.summary.unpaid_count || 0) + ' unpaid / ' + (data.summary.paid_count || 0) + ' paid';
+      document.getElementById('kpi-bills').textContent = billLabel;
+      document.getElementById('kpi-unbilled').textContent = data.summary.unbilled_count || '0';
+
+      // Show cap warning if data was truncated
+      if (data.activities_capped || data.bills_capped) {
+        statusText.innerHTML = statusText.innerHTML.split('|')[0] + ' | <span style="color:#c0504d;font-size:10px">Data may be truncated — narrow your date range for complete results</span>';
+      }
     }
 
     // Populate activities table

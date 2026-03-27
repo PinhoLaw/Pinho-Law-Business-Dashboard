@@ -16,6 +16,7 @@ module.exports = async function handler(req, res) {
     const accessToken = await getValidToken(userEmail);
 
     const { type = 'all', date_from, date_to } = req.query;
+    const MAX_PAGES = 25; // Up to 5,000 records
 
     const results = {};
 
@@ -30,13 +31,24 @@ module.exports = async function handler(req, res) {
 
       let activities = [];
       try {
-        activities = await fetchAllPages(accessToken, '/activities.json', activityParams);
+        activities = await fetchAllPages(accessToken, '/activities.json', activityParams, MAX_PAGES);
       } catch (e) {
-        // If matter/user fields fail, try without them
         console.log('Retrying activities without association fields:', e.message);
         activityParams.fields = 'id,type,date,quantity,price,total,note';
-        activities = await fetchAllPages(accessToken, '/activities.json', activityParams);
+        activities = await fetchAllPages(accessToken, '/activities.json', activityParams, MAX_PAGES);
       }
+
+      // Client-side date filter as backup (Clio's created_since filters by creation date, not activity date)
+      if (date_from || date_to) {
+        activities = activities.filter(a => {
+          if (!a.date) return true;
+          if (date_from && a.date < date_from) return false;
+          if (date_to && a.date > date_to) return false;
+          return true;
+        });
+      }
+
+      const activitiesCapped = activities.length >= MAX_PAGES * 200;
 
       results.activities = activities.map(a => ({
         id: a.id,
@@ -50,6 +62,8 @@ module.exports = async function handler(req, res) {
         matter_description: a.matter ? (a.matter.description || '') : '',
         user_name: a.user ? (a.user.name || '') : '',
       }));
+
+      results.activities_capped = activitiesCapped;
     }
 
     // Fetch bills with client and matter associations
@@ -63,16 +77,29 @@ module.exports = async function handler(req, res) {
 
       let bills = [];
       try {
-        bills = await fetchAllPages(accessToken, '/bills.json', billParams);
+        bills = await fetchAllPages(accessToken, '/bills.json', billParams, MAX_PAGES);
       } catch (e) {
-        // If association fields fail, try simpler fields
         console.log('Retrying bills without association fields:', e.message);
         billParams.fields = 'id,number,issued_at,due_at,total,balance,state';
-        bills = await fetchAllPages(accessToken, '/bills.json', billParams);
+        bills = await fetchAllPages(accessToken, '/bills.json', billParams, MAX_PAGES);
       }
 
+      // Client-side date filter as backup
+      if (date_from || date_to) {
+        bills = bills.filter(b => {
+          if (!b.issued_at) return true;
+          if (date_from && b.issued_at < date_from) return false;
+          if (date_to && b.issued_at > date_to) return false;
+          return true;
+        });
+      }
+
+      // Filter out void and deleted bills
+      bills = bills.filter(b => b.state !== 'void' && b.state !== 'deleted');
+
+      const billsCapped = bills.length >= MAX_PAGES * 200;
+
       results.bills = bills.map(b => {
-        // Extract matter info - could be in 'matter', 'matters', or absent
         let matterNum = '';
         let matterDesc = '';
         if (b.matters && b.matters.length > 0) {
@@ -83,7 +110,6 @@ module.exports = async function handler(req, res) {
           matterDesc = b.matter.description || '';
         }
 
-        // Extract client info
         let clientName = '';
         if (b.client) {
           clientName = b.client.name || '';
@@ -102,6 +128,8 @@ module.exports = async function handler(req, res) {
           matter_description: matterDesc,
         };
       });
+
+      results.bills_capped = billsCapped;
     }
 
     // Compute summary
@@ -110,7 +138,11 @@ module.exports = async function handler(req, res) {
         .filter(a => a.type === 'TimeEntry')
         .reduce((sum, a) => sum + (a.quantity || 0), 0);
       const totalBilled = results.activities
-        .reduce((sum, a) => sum + (a.total || 0), 0);
+        .filter(a => a.total && a.total > 0)
+        .reduce((sum, a) => sum + a.total, 0);
+      const totalUnbilled = results.activities
+        .filter(a => !a.total || a.total === 0)
+        .length;
 
       // Clio returns quantity in seconds - convert to hours
       const totalHoursConverted = totalHours / 3600;
@@ -118,18 +150,23 @@ module.exports = async function handler(req, res) {
         total_hours: Math.round(totalHoursConverted * 100) / 100,
         total_billed: Math.round(totalBilled * 100) / 100,
         activity_count: results.activities.length,
+        unbilled_count: totalUnbilled,
       };
     }
 
     if (results.bills) {
-      const totalOutstanding = results.bills
-        .filter(b => b.state !== 'paid')
-        .reduce((sum, b) => sum + (b.balance || 0), 0);
+      const unpaidBills = results.bills.filter(b => b.state !== 'paid');
+      const paidBills = results.bills.filter(b => b.state === 'paid');
+      const totalOutstanding = unpaidBills.reduce((sum, b) => sum + (b.balance || 0), 0);
+      const totalPaid = paidBills.reduce((sum, b) => sum + (b.total || 0), 0);
 
       results.summary = {
         ...(results.summary || {}),
         total_outstanding: Math.round(totalOutstanding * 100) / 100,
+        total_paid: Math.round(totalPaid * 100) / 100,
         bill_count: results.bills.length,
+        unpaid_count: unpaidBills.length,
+        paid_count: paidBills.length,
       };
     }
 
