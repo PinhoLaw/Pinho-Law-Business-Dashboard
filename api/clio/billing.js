@@ -25,8 +25,8 @@ module.exports = async function handler(req, res) {
         fields: 'id,type,date,quantity,price,total,note,matter{id,display_number,description},user{id,name}',
         order: 'date(desc)',
       };
-      if (date_from) activityParams['date_from'] = date_from;
-      if (date_to) activityParams['date_to'] = date_to;
+      if (date_from) activityParams['created_since'] = date_from;
+      if (date_to) activityParams['created_before'] = date_to;
 
       let activities = [];
       try {
@@ -57,7 +57,6 @@ module.exports = async function handler(req, res) {
       const billParams = {
         fields: 'id,number,issued_at,due_at,total,balance,state,client{id,name},matters{id,display_number,description}',
         order: 'issued_at(desc)',
-        status: 'awaiting_payment,draft,pending_approval',
       };
       if (date_from) billParams['issued_since'] = date_from;
       if (date_to) billParams['issued_before'] = date_to;
